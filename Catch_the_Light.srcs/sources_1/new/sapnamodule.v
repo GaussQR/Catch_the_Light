@@ -5,13 +5,16 @@ module SapnaModule (
 input wire clock,
 input wire reset,
 output reg [3:0] rand,
+output reg [3:0] rand_,
 input wire pressed
 );
-reg[10:0] cnt;
+reg[13:0] cnt;
 reg[3:0] rnd;
+reg[3:0] rnd_;
 initial begin
     cnt=0;
     rnd=0;
+    rnd_=0;
 end
 /*reg [9:0] rnd;
 wire feedback;
@@ -46,9 +49,12 @@ assign lfsr_next = {lfsr[8:0], feedback};
 */
 always @(posedge clock) begin
     cnt=cnt+1;
-    if(pressed==1)
+    if(pressed==1) begin
        rnd=cnt[7:4];
-    rand=rnd; 
+       rnd_=cnt[11:8];
+    end
+    rand=rnd;
+    rand_=rnd_; 
     end
     
     
