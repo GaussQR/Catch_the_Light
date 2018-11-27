@@ -37,7 +37,8 @@ module main(
     reg modeFlag,gameOn,reset_flag,gameOn_flag,firstCycle_flag,score_flag;
     reg reset,mode;
     reg pressed;
-    wire[19:0] scoreBcd;
+    wire[19:0] disBcd;
+    reg [7:0] dis;
     reg [7:0] score;
     reg [7:0] highscore;
     reg [5:0] count;
@@ -65,12 +66,18 @@ module main(
 		if(sw[i]==1 && pressed==0)
 			pressed=1;
     end  
+    always @(posedge clk1)begin
+               if(hscorebtn==1) begin
+                   dis=highscore;
+               end
+               else
+                   dis=score;
+    end
 
 
-
-    binToBcd b(.B2(score),.bcdout2(scoreBcd));  //for score conversion into bcd for display
-    seg7decimal dis(
-    .x(scoreBcd),
+    binToBcd b(.B2(dis),.bcdout2(disBcd));  //for score conversion into bcd for display
+    seg7decimal disp(
+    .x(disBcd),
     .clk(clk1),
     .clr(clr1),
     .a2g(a_to_g),
@@ -80,7 +87,7 @@ module main(
     SapnaModule s(.rand(rand2), .rand_(rand2_),.reset(reset),.pressed(pressed),.clock(clk1));   //gives a random number the random number that changes when pressed is made 1
     RishabhModule r(.reset1(reset),.turnOn(turnOn),.clk(clk1));    // gives a signal turnOn after intervals Led is turned on when turnOn signal is on and score is also increases only at this point
 	always @(posedge clk1)begin
-	    if(modeBtn==1) begin
+	     if(modeBtn==1) begin
 	       if(mode==0 && modeFlag==0) begin
 	           mode=1;         //mode=0 is single led mode, mode=2 is double led mode
 	           modeFlag=1;
@@ -105,13 +112,6 @@ module main(
 				gameOn=0;
 				gameOn_flag=1;
 			end
-		end
-		else if(hscorebtn==1) begin
-                if(highscore<score)
-                  highscore=score;
-                else
-                    score=highscore;
-		      
 		end
 		else begin
 		    modeFlag=0;
@@ -176,8 +176,11 @@ module main(
 				end
 				// I need to get a random number in rand in the first cycle	
 				
-				if(count>30)
-					gameOn=0; 
+				if(count>30) begin
+					gameOn=0;
+					if(score>highscore)
+					   highscore=score; 
+					end
 			end
 			else
 				led=16'b0000000000000000;
