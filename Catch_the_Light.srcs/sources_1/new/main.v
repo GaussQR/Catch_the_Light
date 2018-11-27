@@ -31,26 +31,30 @@ module main(
     input startbtn//, //connected with middle push btn
    // input dp1
     );
-    reg gameOn;
+	integer i;
+    reg gameOn,gameOn_flag,firstCycle_flag,score_flag;
     reg reset;
     reg pressed;
     wire[19:0] scoreBcd;
     reg [7:0] score;
     reg [5:0] count;
-    reg flag,flag2;
-    wire [3:0]rand;
-    
+    wire [3:0]rand,[3:0]rand2;
     wire turnOn;
-    initial
-     begin
-        flag=0;
-        flag2=0;
-        pressed=0;
-        reset=0;
-        gameOn = 0;
-        score = 8'b00000000;
-        count = 6'b000000;
-    end
+	initial begin
+		gameOn=0;
+		gameOn_flag=0;
+		score=0;
+		count=0;
+		firstCycle_flag=0;
+	end
+    always @(*)begin
+	for(i=0;i<16;i=i+1)
+		if(sw[i]==1)
+			pressed=1;
+    end  
+
+
+
     binToBcd b(.B2(score),.bcdout2(scoreBcd));  //for score conversion into bcd for display
     seg7decimal dis(
     .x(scoreBcd),
@@ -60,77 +64,73 @@ module main(
     .an(an1)//,
     //.dp(dp1) 
     );    // bcd score passed to 7 segment for display
-    SapnaModule s(.rand(rand),.reset(reset),.pressed(pressed),.clock(clk1));   //gives a random number the random number that changes when pressed is made 1
+    SapnaModule s(.rand(rand2),.reset(reset),.pressed(pressed),.clock(clk1));   //gives a random number the random number that changes when pressed is made 1
     RishabhModule r(.reset1(reset),.turnOn(turnOn),.clk(clk1));    // gives a signal turnOn after intervals Led is turned on when turnOn signal is on and score is also increases only at this point
-    //always @(*)begin
-        
+	always @(posedge clk)begin
+		if(startbtn==1) begin
+			if(gameOn==0 && gameOn_flag==0) begin
+				gameOn=1;
+				gameOn_flag=1;
+				score=0;
+				count=0;
+				firstCycle_flag=0;
+			else if(gameOn==1 && gameOn_flag==0) begin
+				gameOn=0;
+				gameOn_flag=1;
+		end
+		else begin
+			gameOn_flag=0;
+			if(gameOn==1) begin
+				// here startbtn is off and gameOn is on
+				//check if turnOn is on
+				if(turnOn==1) begin
+					// In the firrst cycle get a random number in rand
+					if(firstCycle_flag==0) begin
+						firstCycle_flag=1;
+						rand=rand2;
+						score_flag=0;
+						count=count+1;
+					end
+					else begin
+						led=16'b0000000000000000;
+						led[rand]=1;
+						if(sw[rand]==1) begin
+							for(i=0;i<16;i=i+1) begin
+								if(sw[i]==1)
+									if(i!=rand)
+										score_flag=1;
+					
+							end
+							if(score_flag==0) begin
+								score=score+1;
+								score_flag=1;
+							end
+						end
+					end
+				end
+				else begin
+					firstCycle_flag=0;
+					led=16'b0000000000000000;
+				end
+				// I need to get a random number in rand in the first cycle	
+				
+				if(count>30)
+					gameOn=0; 
+			end
+			else
+				led=16'b0000000000000000;
+		end
     
-        
-    //end
-    
-    always @(*)begin
-        if(startbtn==1) begin   // start button toggles the gameon register, all the processing is doneonly when gameon is 1
-            if(gameOn==1) begin
-                  gameOn=0;
-                  flag=0;
-                  flag2=0;
-            end
-            else begin
-                  gameOn=1;
-                  flag=0;
-                  flag2=0;
-            end
-        end
-        else begin            
-            if(gameOn==1) begin
-                if(reset==0 && flag==0) begin    //reset is made one for one cycle after the gameOn is made 1, this resets the other modules like 'random-number' and 'turnOn' to start the game 
-                reset=1;
-                flag=1;
-                pressed=1;
-            end
-            else begin
-                reset=0;
-                if(turnOn==0) begin
-                           flag2=0;        //flag2 is again made 0 so that score can increase in the next period
-                end
-                else begin
-                    //main logic here
-                    if(pressed==1) begin
-                       pressed=0;   // making pressed 1 for a cycle so that random numer is changed
-                       count=count+1;
-                       if(count>20) begin
-                                               gameOn=0;   // ending the game when LED has glown 20 times
-                                               flag=0;
-                                               flag2=0;
-                                           end
-
-                    end
-                    else begin
-                       
-                            //turn on the LED at index ${rand}
-                            // check if switch at the same index is on
-                            led=16'b0000000000000000;
-                            led[rand]=1;
-                            if(sw[rand]==1)
-                                if(flag2==0) begin
-                                    score=score+1;
-                                    flag2=1;        // flag 2 takes care that score is increased only once for the one eriod when turnOn is 1 continuously
-                                end
-                       
-                       
-                    end
-                end
-            end
-        end
-        end
-    end
-    
-    always @(*)begin
-        if(gameOn==1) begin
-            //if any of the switches is on for more than 5 seconds then end the game here
-            // use 16 counters for the purpose
-        end
-    end
-
+	end    
     
 endmodule
+
+
+
+
+
+
+
+
+
+
