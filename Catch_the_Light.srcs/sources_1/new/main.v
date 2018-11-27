@@ -29,7 +29,8 @@ module main(
     output [6:0] a_to_g,
     output [3:0] an1,
     input modeBtn,
-    input startbtn//, //connected with middle push btn
+    input startbtn,//, //connected with middle push btn
+    input hscorebtn
    // input dp1
     );
 	integer i;
@@ -38,6 +39,7 @@ module main(
     reg pressed;
     wire[19:0] scoreBcd;
     reg [7:0] score;
+    reg [7:0] highscore;
     reg [5:0] count;
     reg [3:0]rand;
     wire [3:0]rand2;
@@ -52,6 +54,7 @@ module main(
 		gameOn_flag=0;
 		reset_flag=0;
 		score=0;
+		highscore=0;
 		count=0;
 		firstCycle_flag=0;
 		//pressed_flag=0;
@@ -102,6 +105,13 @@ module main(
 				gameOn=0;
 				gameOn_flag=1;
 			end
+		end
+		else if(hscorebtn==1) begin
+                if(highscore<score)
+                  highscore=score;
+                else
+                    score=highscore;
+		      
 		end
 		else begin
 		    modeFlag=0;
@@ -176,10 +186,6 @@ module main(
 	end    
     
 endmodule
-
-
-
-
 
 
 
